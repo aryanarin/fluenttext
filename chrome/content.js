@@ -53,7 +53,6 @@
   let settings = null;
   let configured = false;
   let modes = [];
-  let commonLanguages = [];
   let siteOff = true;
   let sig = '';
   let active = null;
@@ -100,7 +99,6 @@
     settings = r.settings;
     configured = r.hasKey;
     modes = r.modes || [];
-    commonLanguages = r.commonLanguages || [];
     const host = siteHost();
     const blocked = host === 'docs.google.com' ||
       settings.disabledSites.some((d) => host === d || host.endsWith('.' + d));
@@ -1127,42 +1125,19 @@
       menu.append(h('div', { class: 'opt', onclick: () => runTask('rewrite', m.id) }, m.label));
     }
     menu.append(h('div', { class: 'sec' }, 'Translate to'));
-    for (const lang of settings.targetLanguages || []) {
+    const languages = settings.targetLanguages || [];
+    for (const lang of languages) {
       menu.append(h('div', { class: 'opt', onclick: () => runTask('translate', lang) }, lang));
     }
-
-    // Any other language: type it, pick a suggestion or press Enter.
-    const other = h('input', { type: 'text', placeholder: 'Other language...', 'aria-label': 'Other language' });
-    const sugg = h('div', null);
-    const matches = () => {
-      const q = other.value.trim().toLowerCase();
-      return q ? commonLanguages.filter((l) => l.toLowerCase().startsWith(q)).slice(0, 5) : [];
-    };
-    const drawSugg = () => {
-      sugg.replaceChildren(...matches().map((l) => h('div', { class: 'opt', onclick: () => runTask('translate', l) }, l)));
-    };
-    other.addEventListener('input', drawSugg);
-    other.addEventListener('keydown', (e) => {
-      e.stopPropagation();
-      if (e.key === 'Escape') closeRewrite();
-      if (e.key !== 'Enter') return;
-      const typed = other.value.trim();
-      if (!typed) return;
-      const m = matches();
-      const exact = m.find((l) => l.toLowerCase() === typed.toLowerCase());
-      runTask('translate', exact || (m.length === 1 ? m[0] : typed));
-    });
-    menu.append(other, sugg);
+    if (!languages.length) {
+      menu.append(h('div', {
+        class: 'opt',
+        onclick: () => { closeRewrite(); send({ type: 'openOptions' }); }
+      }, 'Add languages in Settings'));
+    }
 
     menu.append(h('div', { class: 'sec' }, 'Language'));
     menu.append(h('div', { class: 'opt', onclick: () => runTask('detect') }, 'Detect language'));
-    const input = h('input', { type: 'text', placeholder: 'Or describe the change, then Enter' });
-    input.addEventListener('keydown', (e) => {
-      e.stopPropagation();
-      if (e.key === 'Enter' && input.value.trim()) runTask('rewrite', 'custom', input.value.trim());
-      if (e.key === 'Escape') closeRewrite();
-    });
-    menu.append(input);
     menu.append(
       h('div', { class: 'foot' },
         h('div', null,
@@ -1177,8 +1152,8 @@
     placeNear(menu, anchorRect());
   }
 
-  // kind: 'rewrite' (arg = mode id or 'custom'), 'translate' (arg = language), 'detect'.
-  async function runTask(kind, arg, instruction) {
+  // kind: 'rewrite' (arg = mode id), 'translate' (arg = language), 'detect'.
+  async function runTask(kind, arg) {
     const snap = ensureSnap();
     if (!snap) return;
     ensureUI();
@@ -1197,11 +1172,11 @@
       msg = { type: 'detect', text: snap.text };
       busy = 'Detecting...';
     } else {
-      label = arg === 'custom' ? 'Custom' : (modes.find((m) => m.id === arg) || {}).label || 'Rewrite';
-      msg = { type: 'rewrite', text: snap.text, mode: arg, instruction };
+      label = (modes.find((m) => m.id === arg) || {}).label || 'Rewrite';
+      msg = { type: 'rewrite', text: snap.text, mode: arg };
       busy = 'Rewriting...';
     }
-    const retry = () => runTask(kind, arg, instruction);
+    const retry = () => runTask(kind, arg);
     const anchor = anchorRect();
 
     card.replaceChildren(

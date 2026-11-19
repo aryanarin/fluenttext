@@ -2,6 +2,17 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-11-02
+
+### Changed
+- The selection menu now offers two rewrite actions: **Improve Writing**, which fixes grammar and wording without changing the tone, and **More polite**. The other rewrite modes and the custom-instruction field were removed, and the quick-action selector uses the same two modes.
+- The selection menu lists only the translation languages configured in Settings. German is now the only default; the old untouched English + German pair is migrated to German.
+- Removed the "Other language..." field from the selection menu. Additional languages are added under **Settings > Translation**, while the right-click menu keeps its "More languages" list.
+
+### Fixed
+- Settings sidebar selection now follows the clicked section. Cards live in two independent columns, so the old scroll-spy could pick a card from the other column (Translation showed Writing, and Quick actions showed Connection). A click selects its section immediately and holds it through the scroll; natural scrolling picks whichever card crossed the reading line most recently.
+- Store metadata no longer lists provider brands. Chrome Web Store rejected 1.2.0 for keyword spam (Yellow Argon) because the description contained a list of provider names. The listing copy and manifest description now use generic wording; provider choices remain available in the settings UI.
+
 ## [1.2.0] - 2026-10-31
 
 ### Changed

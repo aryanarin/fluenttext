@@ -365,20 +365,13 @@ function cleanRewrite(out, original) {
   return t;
 }
 
-async function handleRewrite({ text, mode, instruction }) {
+async function handleRewrite({ text, mode }) {
   if (typeof text !== 'string' || !text.trim()) return { ok: false, error: 'empty' };
   const { settings: s, conn } = await getConnectionState();
   const input = text.slice(0, MAX_REWRITE_CHARS);
 
-  let task;
-  if (mode === 'custom') {
-    const custom = String(instruction || '').trim().slice(0, 300);
-    if (!custom) return { ok: false, error: 'empty' };
-    task = `Follow this instruction: ${custom}`;
-  } else {
-    const m = REWRITE_MODES.find((x) => x.id === mode) || REWRITE_MODES[0];
-    task = m.prompt;
-  }
+  const m = REWRITE_MODES.find((x) => x.id === mode) || REWRITE_MODES[0];
+  const task = m.prompt;
 
   const lang = s.language === 'auto'
     ? 'Keep the same language as the original.'
@@ -588,16 +581,14 @@ async function handleMessage(msg) {
     case 'detect':
       return handleDetect(msg);
     case 'getSettings': {
-      const [state, modes, commonLanguages] = await Promise.all([
-        getConnectionState(), Promise.resolve(REWRITE_MODES.map(({ id, label }) => ({ id, label }))),
-        Promise.resolve(COMMON_LANGUAGES)
+      const [state, modes] = await Promise.all([
+        getConnectionState(), Promise.resolve(REWRITE_MODES.map(({ id, label }) => ({ id, label })))
       ]);
       return {
         ok: true,
         settings: state.settings,
         hasKey: state.conn.configured,
-        modes,
-        commonLanguages
+        modes
       };
     }
     case 'check':
@@ -703,6 +694,17 @@ async function migrateLegacyProxy() {
   }
 }
 
+// 1.2.1 ships with German-only translation by default. Replace the old
+// untouched English + German pair; any other list is a user choice and stays.
+async function migrateTargetLanguages() {
+  const s = await getSettings();
+  if (s.targetLanguages.length !== 2) return;
+  const names = new Set(s.targetLanguages.map((name) => name.toLowerCase()));
+  if (names.size === 2 && names.has('english') && names.has('german')) {
+    await saveSettings({ targetLanguages: ['German'] });
+  }
+}
+
 // Serialize rebuilds so two quick settings changes cannot create duplicate menu IDs.
 let menuBuild = Promise.resolve();
 function requestMenuBuild() {
@@ -712,6 +714,7 @@ function requestMenuBuild() {
 
 api.runtime.onInstalled.addListener(async (details) => {
   try { await migrateLegacyProxy(); } catch { /* ignore */ }
+  try { await migrateTargetLanguages(); } catch { /* ignore */ }
   requestMenuBuild();
   if (details.reason === 'install') {
     const { conn } = await getConnectionState();
@@ -759,7 +762,7 @@ api.commands.onCommand.addListener(async (command, tab) => {
   const target = tab || (await currentTab());
   if (command === 'tone-shortcut') {
     const s = await getSettings();
-    const mode = REWRITE_MODES.some((m) => m.id === s.quickTone) ? s.quickTone : 'formal';
+    const mode = REWRITE_MODES.some((m) => m.id === s.quickTone) ? s.quickTone : 'improve';
     sendToTab(target, { type: 'quickRewrite', mode });
   } else if (command === 'translate-shortcut') {
     const s = await getSettings();

@@ -331,9 +331,7 @@ function mockGroqResponse(url, postData) {
   } else if (/identify the natural language/i.test(system)) {
     content = JSON.stringify({ language: 'English' });
   } else if (/professional writing assistant/i.test(system)) {
-    if (/warm, friendly/i.test(system)) content = `Hey there! ${text.charAt(0).toUpperCase()}${text.slice(1)}`;
-    else if (/formal, professional/i.test(system)) content = `Dear recipient, ${text}`;
-    else content = `Revised: ${text}`;
+    content = /polite, courteous/i.test(system) ? `Polite: ${text}` : `Revised: ${text}`;
   } else if (/Reply with OK/i.test(user)) {
     content = 'OK';
   }
@@ -586,9 +584,9 @@ async function run() {
         language: 'en-US',
         checkModel: 'openai/gpt-oss-20b',
         rewriteModel: 'openai/gpt-oss-120b',
-        targetLanguages: ['German', 'Spanish'],
+        targetLanguages: ['German'],
         translateTone: 'formal',
-        quickTone: 'friendly',
+        quickTone: 'improve',
         quickLanguage: 'German',
         bubbleEverywhere: false,
         categories: { spelling: true, grammar: true, punctuation: true, clarity: true, style: false },
@@ -675,21 +673,26 @@ async function run() {
     await selectInTextarea(page, 'This is a test of the writing assistant.'.indexOf('test'), 'This is a test of the writing assistant.'.length);
     await openMenuFromSelection(page);
     const menuText = await evaluate(page, shadowExpr(`return s.querySelector('.menu').innerText;`));
-    ok('rewrite menu offers tone modes', /More formal/.test(menuText) && /More friendly/.test(menuText), '');
-    ok('rewrite menu offers translation and support', /German/.test(menuText) && /Support/.test(menuText), '');
+    ok('rewrite menu offers exactly two modes',
+      /Improve Writing/.test(menuText) && /More polite/.test(menuText) &&
+      !/Make shorter|Make longer|Paraphrase|More formal|More friendly|More confident/.test(menuText), menuText);
+    ok('rewrite menu lists only the configured languages',
+      /German/.test(menuText) && !/Spanish/.test(menuText) && !/Other language/.test(menuText) && /Support/.test(menuText), menuText);
+    const menuInputs = await evaluate(page, shadowExpr(`return s.querySelectorAll('.menu input').length;`));
+    ok('star menu has no custom instruction or language fields', menuInputs === 0, String(menuInputs));
     const shotD = await screenshot(page, '04-rewrite-menu');
     console.log('Screenshot:', shotD);
 
-    await clickMenuOption(page, 'More friendly');
-    const rewritten = await waitFor(page, shadowExpr(`const c = s.querySelectorAll('.card')[3]; return c && !c.classList.contains('hidden') ? c.querySelector('.result').textContent : false;`), 'friendly rewrite', { timeout: 10000 });
-    ok('friendly rewrite returns text', /Hey there! Test of the writing assistant\./.test(rewritten), rewritten);
-    const shotE = await screenshot(page, '05-friendly-result');
+    await clickMenuOption(page, 'More polite');
+    const rewritten = await waitFor(page, shadowExpr(`const c = s.querySelectorAll('.card')[3]; return c && !c.classList.contains('hidden') ? c.querySelector('.result').textContent : false;`), 'polite rewrite', { timeout: 10000 });
+    ok('More polite returns text', /Polite: test of the writing assistant\./.test(rewritten), rewritten);
+    const shotE = await screenshot(page, '05-polite-result');
     console.log('Screenshot:', shotE);
     await clickCardButton(page, 'Replace');
-    const replaced = await waitFor(page, `document.getElementById('editor').value === 'This is a Hey there! Test of the writing assistant.' ? document.getElementById('editor').value : false`, 'rewrite replacement', { timeout: 5000 });
+    const replaced = await waitFor(page, `document.getElementById('editor').value === 'This is a Polite: test of the writing assistant.' ? document.getElementById('editor').value : false`, 'rewrite replacement', { timeout: 5000 });
     ok('Replace writes the rewrite into the field', !!replaced, String(replaced));
 
-    await selectInTextarea(page, 0, 'This is a Hey there! Test of the writing assistant.'.length);
+    await selectInTextarea(page, 0, 'This is a Polite: test of the writing assistant.'.length);
     await openMenuFromSelection(page);
     await clickMenuOption(page, 'German');
     const translated = await waitFor(page, shadowExpr(`const c = s.querySelectorAll('.card')[3]; return c && !c.classList.contains('hidden') ? c.innerText : false;`), 'translation result', { timeout: 10000 });
@@ -710,10 +713,10 @@ async function run() {
       const tabs = await chrome.tabs.query({});
       const tab = tabs.find((t) => t.active);
       if (!tab) return false;
-      await chrome.tabs.sendMessage(tab.id, { type: 'quickRewrite', mode: 'friendly' });
+      await chrome.tabs.sendMessage(tab.id, { type: 'quickRewrite', mode: 'polite' });
       return true;
     })()`);
-    const quick = await waitFor(page, `document.getElementById('editor').value === 'Hey there! Please send me the report.' ? document.getElementById('editor').value : false`, 'quick rewrite applied', { timeout: 15000 });
+    const quick = await waitFor(page, `document.getElementById('editor').value === 'Polite: Please send me the report.' ? document.getElementById('editor').value : false`, 'quick rewrite applied', { timeout: 15000 });
     ok('quick action rewrites the selection directly', !!quick, String(quick));
     const toast = await waitFor(page, `(() => {
       const h = document.querySelector('[data-fluenttext]');
@@ -771,7 +774,9 @@ async function run() {
       providerOptions: [...document.getElementById('provider').options].map((o) => o.value),
       hint: document.getElementById('providerHint').textContent,
       tone: document.getElementById('quickTone').value,
+      toneOptions: [...document.getElementById('quickTone').options].map((o) => o.textContent),
       language: document.getElementById('quickLanguage').value,
+      targetLanguages: document.getElementById('targetLanguages').value,
       shortcutUrl: document.getElementById('shortcutUrl').textContent,
       shortcuts: document.getElementById('shortcutList').innerText
     }))()`);
@@ -779,7 +784,13 @@ async function run() {
     ok('Worker proxy is offered as its own provider',
       providerState.providerOptions.includes('proxy') && providerState.proxyHidden,
       providerState.providerOptions.join(','));
-    ok('quick action settings are rendered', providerState.tone === 'friendly' && providerState.language === 'German', providerState.tone + '/' + providerState.language);
+    ok('quick action settings are rendered', providerState.tone === 'improve' && providerState.language === 'German', providerState.tone + '/' + providerState.language);
+    ok('quick rewrite offers only the two modes',
+      providerState.toneOptions.length === 2 &&
+      providerState.toneOptions.includes('Improve Writing') &&
+      providerState.toneOptions.includes('More polite'),
+      providerState.toneOptions.join(' | '));
+    ok('translation languages default to German only', providerState.targetLanguages === 'German', providerState.targetLanguages);
     ok('shortcut page address is shown', providerState.shortcutUrl === 'chrome://extensions/shortcuts', providerState.shortcutUrl);
     ok('all four shortcuts are listed', /Alt\s*\+\s*Shift\s*\+\s*E/.test(providerState.shortcuts) && /Alt\s*\+\s*Shift\s*\+\s*F/.test(providerState.shortcuts) && /Alt\s*\+\s*Shift\s*\+\s*G/.test(providerState.shortcuts) && /Alt\s*\+\s*Shift\s*\+\s*K/.test(providerState.shortcuts), providerState.shortcuts);
     await screenshot(opt, '09-options');
@@ -799,6 +810,30 @@ async function run() {
     await screenshot(opt, '12-options-support');
     await evaluate(opt, `document.getElementById('closeSupport').click(); true`, { userGesture: true });
     await waitFor(opt, `!document.getElementById('supportDialog').open`, 'support dialog closed', { timeout: 5000 });
+
+    // Sidebar selection must follow the clicked card even though the two
+    // columns scroll past the reading line independently.
+    const clickNav = async (id) => {
+      await evaluate(opt, `document.querySelector('.nav-item[data-section="${id}"]').click(); true`, { userGesture: true });
+      await sleep(1600);
+      return evaluate(opt, `(() => ({
+        active: document.querySelector('.nav-item.active')?.dataset.section || null,
+        hash: location.hash,
+        top: Math.round(document.getElementById('${id}').getBoundingClientRect().top)
+      }))()`);
+    };
+    const translationNav = await clickNav('translation');
+    ok('sidebar keeps Translation selected after clicking it',
+      translationNav.active === 'translation' && translationNav.hash === '#translation',
+      JSON.stringify(translationNav));
+    ok('Translation scrolls into view below the sticky header',
+      translationNav.top > 60 && translationNav.top < 600, JSON.stringify(translationNav));
+    const shortcutsNav = await clickNav('shortcuts');
+    ok('sidebar keeps Quick actions selected after clicking it',
+      shortcutsNav.active === 'shortcuts' && shortcutsNav.hash === '#shortcuts',
+      JSON.stringify(shortcutsNav));
+    ok('Quick actions lands just below the sticky header',
+      shortcutsNav.top > 60 && shortcutsNav.top < 160, JSON.stringify(shortcutsNav));
 
     // ---------------------------------------------------------- popup
     await browser.send('Target.activateTarget', { targetId: test.targetId }).catch(() => {});
@@ -837,7 +872,7 @@ async function run() {
       buttons: [...document.querySelectorAll('button, a.foot-link')].map((b) => b.textContent.trim()).filter(Boolean)
     }))()`);
     ok('popup shows the provider and model', popupState.conn === 'Groq \u00B7 openai/gpt-oss-20b', popupState.conn);
-    ok('popup explains the configured quick actions', /More friendly/.test(popupState.hint) && /German/.test(popupState.hint), popupState.hint);
+    ok('popup explains the configured quick actions', /Improve Writing/.test(popupState.hint) && /German/.test(popupState.hint), popupState.hint);
     ok('popup shows support, shortcuts and report links', popupState.buttons.some((b) => /Support/.test(b)) && popupState.buttons.some((b) => /Shortcuts/.test(b)) && popupState.buttons.some((b) => /Report/.test(b)), popupState.buttons.join(' | '));
     await screenshot(popup, '13-popup', 380, 560);
     if (popupTargetId) await browser.send('Target.closeTarget', { targetId: popupTargetId }).catch(() => {});
@@ -976,7 +1011,7 @@ async function runCustomPhase(chrome, extDir, server) {
         enabled: true,
         language: 'en-US',
         targetLanguages: ['German'],
-        quickTone: 'friendly',
+        quickTone: 'improve',
         quickLanguage: 'German',
         debounceMs: 400,
         categories: { spelling: true, grammar: true, punctuation: true, clarity: true, style: false }

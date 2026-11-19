@@ -226,7 +226,12 @@ async function main() {
   assert(r && r.ok && r.settings.provider === 'groq', `[${namespace}] defaults to the Groq provider`);
   assert(r.settings.checkModel === 'openai/gpt-oss-20b', `[${namespace}] default check model`);
   assert(r.hasKey === false, `[${namespace}] reports no connection before setup`);
-  assert(Array.isArray(r.modes) && r.modes.length === 8, `[${namespace}] returns rewrite modes`);
+  assert(Array.isArray(r.modes) && r.modes.length === 2 &&
+    r.modes.some((m) => m.id === 'improve') && r.modes.some((m) => m.id === 'polite'),
+    `[${namespace}] returns exactly two rewrite modes`);
+  assert(r.settings.targetLanguages.length === 1 && r.settings.targetLanguages[0] === 'German',
+    `[${namespace}] default translation language is German only`);
+  assert(r.settings.quickTone === 'improve', `[${namespace}] default quick rewrite is Improve Writing`);
 
   r = await send({ type: 'check', text: 'I saw teh cat.' });
   assert(r && r.ok === false && r.error === 'no_key', `[${namespace}] check without a key is rejected`);
@@ -258,6 +263,16 @@ async function main() {
   responder = async () => chatReply('  This is better.  ');
   r = await send({ type: 'rewrite', text: 'this is bad', mode: 'improve' });
   assert(r && r.ok && r.text === 'This is better.', `[${namespace}] rewrite trims the result`);
+  const improveBody = JSON.parse(fetchCalls.filter((c) => c.url === GROQ_CHAT).at(-1).init.body);
+  assert(/preserve the original tone/i.test(improveBody.messages[0].content),
+    `[${namespace}] improve writing preserves the original tone`);
+
+  responder = async () => chatReply('  Could you please send it.  ');
+  r = await send({ type: 'rewrite', text: 'send it', mode: 'polite' });
+  assert(r && r.ok && r.text === 'Could you please send it.', `[${namespace}] polite rewrite returns text`);
+  const politeBody = JSON.parse(fetchCalls.filter((c) => c.url === GROQ_CHAT).at(-1).init.body);
+  assert(/polite, courteous/i.test(politeBody.messages[0].content),
+    `[${namespace}] polite rewrite uses the politeness prompt`);
 
   responder = async () => chatReply(JSON.stringify({ source_language: 'German', translation: 'Hallo Welt' }));
   r = await send({ type: 'translate', text: 'Hallo Welt', language: 'English' });
@@ -327,13 +342,13 @@ async function main() {
       customAuth: 'bearer',
       checkModel: 'custom-small',
       rewriteModel: 'custom-large',
-      targetLanguages: ['English', 'German'],
+      targetLanguages: ['German'],
       categories: { spelling: true, grammar: true, punctuation: true, clarity: true, style: false },
       language: 'en-US',
       debounceMs: 900,
       showBadge: true,
       translateTone: 'formal',
-      quickTone: 'formal',
+      quickTone: 'improve',
       quickLanguage: 'German'
     }
   });
@@ -361,12 +376,12 @@ async function main() {
   assert(JSON.parse(lastCustom.init.body).model === 'custom-small', `[${namespace}] custom check model is used`);
 
   // ---------------------------------------------------------------- shortcuts and support
-  await syncArea.set({ settings: { ...clone((await syncArea.get('settings')).settings), quickTone: 'friendly', quickLanguage: 'Spanish' } });
+  await syncArea.set({ settings: { ...clone((await syncArea.get('settings')).settings), quickTone: 'polite', quickLanguage: 'Spanish' } });
   await new Promise((r) => setTimeout(r, 10));
   sentToTabs.length = 0;
   commandListeners[0]('tone-shortcut', { id: 1 });
   await new Promise((r) => setTimeout(r, 30));
-  assert(sentToTabs.at(-1)?.msg.type === 'quickRewrite' && sentToTabs.at(-1)?.msg.mode === 'friendly',
+  assert(sentToTabs.at(-1)?.msg.type === 'quickRewrite' && sentToTabs.at(-1)?.msg.mode === 'polite',
     `[${namespace}] tone shortcut uses the configured mode`);
   commandListeners[0]('translate-shortcut', { id: 1 });
   await new Promise((r) => setTimeout(r, 30));
@@ -472,6 +487,8 @@ async function main() {
   assert(localArea.data.proxyUrl === 'https://legacy-worker.example/',
     `[${namespace}] legacy proxy URL is kept, not discarded`);
   assert(r.hasKey === true, `[${namespace}] migrated proxy counts as configured`);
+  assert(r.settings.targetLanguages.length === 1 && r.settings.targetLanguages[0] === 'German',
+    `[${namespace}] old default languages migrate to German only`);
 
   // ---------------------------------------------------------------- menus
   assert(menus.some((m) => m.id === 'gw-root'), `[${namespace}] context menu root is created`);

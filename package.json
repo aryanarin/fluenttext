@@ -1,7 +1,7 @@
 {
   "name": "fluenttext",
-  "version": "1.2.0",
-  "description": "A writing assistant for Chrome and Firefox, powered by Groq or any OpenAI-compatible API.",
+  "version": "1.2.1",
+  "description": "A writing assistant for Chrome and Firefox that proofreads, rewrites and translates text you type or select.",
   "private": true,
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/aryanarin/fluenttext",

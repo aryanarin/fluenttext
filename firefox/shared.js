@@ -97,9 +97,9 @@ export const DEFAULTS = {
   // the options page can load the live model list from your account.
   checkModel: 'openai/gpt-oss-20b',
   rewriteModel: 'openai/gpt-oss-120b',
-  targetLanguages: ['English', 'German'],
+  targetLanguages: ['German'],
   translateTone: 'formal',
-  quickTone: 'formal',
+  quickTone: 'improve',
   quickLanguage: 'German',
   bubbleEverywhere: false,
   categories: {
@@ -136,14 +136,16 @@ export const LANGUAGES = [
 ];
 
 export const REWRITE_MODES = [
-  { id: 'improve', label: 'Improve writing', prompt: 'Improve the writing: fix errors, tighten wording, and make it flow better while keeping the same meaning and voice.' },
-  { id: 'fix', label: 'Fix grammar & spelling', prompt: 'Fix only spelling, grammar, and punctuation errors. Do not change wording or style otherwise.' },
-  { id: 'shorten', label: 'Make shorter', prompt: 'Make the text noticeably shorter and more concise without losing key information.' },
-  { id: 'expand', label: 'Make longer', prompt: 'Expand the text with a little more detail and context while keeping the same meaning and tone.' },
-  { id: 'paraphrase', label: 'Paraphrase', prompt: 'Paraphrase the text using different wording while keeping the exact meaning.' },
-  { id: 'formal', label: 'More formal', prompt: 'Rewrite the text in a formal, professional tone.' },
-  { id: 'friendly', label: 'More friendly', prompt: 'Rewrite the text in a warm, friendly, approachable tone.' },
-  { id: 'confident', label: 'More confident', prompt: 'Rewrite the text to sound confident and direct, removing hedging and filler.' }
+  {
+    id: 'improve',
+    label: 'Improve Writing',
+    prompt: 'Improve the writing by fixing spelling, grammar, punctuation, and awkward wording. Preserve the original tone, voice, level of formality, and meaning. Do not make the text more formal, friendly, concise, or expressive.'
+  },
+  {
+    id: 'polite',
+    label: 'More polite',
+    prompt: 'Rewrite the text so it sounds more polite, courteous, and considerate while keeping the same meaning, facts, and level of detail. Do not make it overly formal or submissive.'
+  }
 ];
 
 const AUTH_IDS = new Set(AUTH_HEADERS.map(([id]) => id));

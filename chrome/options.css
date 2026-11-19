@@ -2,7 +2,7 @@
 :root { --topbar-h: 68px; }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: calc(var(--topbar-h) + 20px); }
+html { scroll-behavior: smooth; }
 body { background: var(--canvas); }
 a { color: var(--accent); }
 

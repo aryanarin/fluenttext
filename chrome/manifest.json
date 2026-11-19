@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "FluentText",
-  "version": "1.2.0",
-  "description": "A writing assistant for Groq, OpenAI and any OpenAI-compatible API. Fixes spelling, grammar and clarity as you type.",
+  "version": "1.2.1",
+  "description": "Proofread as you type, then rewrite and translate selected text with the AI provider you choose.",
   "homepage_url": "https://github.com/aryanarin/fluenttext",
   "minimum_chrome_version": "105",
   "icons": {

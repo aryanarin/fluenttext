@@ -1,6 +1,6 @@
 # Store submission notes
 
-Reusable text for the Chrome Web Store and addons.mozilla.org (AMO). Version 1.2.0.
+Reusable text for the Chrome Web Store and addons.mozilla.org (AMO). Version 1.2.1.
 
 The product is called **FluentText**. Groq is named only as a supported API provider; the extension is independent and is not affiliated with or endorsed by Groq, Inc.
 
@@ -9,12 +9,98 @@ The product is called **FluentText**. Groq is named only as a supported API prov
 **Name:** FluentText
 
 **Short description (132 characters max):**
-Proofread as you type, rewrite and translate selected text with Groq or any OpenAI-compatible API.
+Proofread as you type, then rewrite and translate selected text with the AI provider you choose.
 
 **Category:** Productivity
 
 **Long description:**
-FluentText is a writing assistant that works on any website. It underlines spelling, grammar, punctuation and clarity problems as you type, and lets you accept each fix with a click or fix everything at once. Select text to rewrite it (improve, shorten, formal, friendly and more), translate it to your pinned languages or any language you type, or detect its language. It is open source (GPL v3), has no tracking, and sends text only to the AI provider you choose. Use a Groq API key, another OpenAI-compatible service, a local model server, or a proxy you control. Two quick-action shortcuts can be pointed at the tone and language you use most, and support links are available throughout the extension.
+FluentText - Your AI Writing Assistant, Everywhere
+
+Write better, communicate clearly, and work across languages with FluentText.
+
+FluentText is a writing assistant that works directly inside your browser. It helps you fix spelling and grammar mistakes, improve clarity, rewrite sentences, and translate text without switching tabs or leaving the website you are working on.
+
+Whether you are writing emails, preparing documents, replying to messages, or filling out forms, FluentText helps you communicate with more confidence.
+
+Key features
+
+1. Smart proofreading
+- Detects spelling and grammar mistakes as you type.
+- Flags punctuation, clarity and style issues.
+- Shows suggestions directly in the text field.
+- Accept or dismiss each suggestion.
+- Fix all detected issues with one click.
+- Add your own words to a personal dictionary.
+
+2. Rewriting
+Choose one of two focused actions:
+- Improve Writing - fixes spelling, grammar and awkward wording while preserving the original tone and meaning.
+- More polite - makes the text more polite and courteous without changing its meaning.
+
+3. Translation
+- Translate selected text into other languages.
+- Detect the source language automatically.
+- The star menu lists only the languages you add in Settings. German is the default.
+- Choose a formal or neutral register.
+- Replace the selected text in place.
+
+4. Language detection
+Identify the language of selected text with a single action. You do not need to guess the source language before translating.
+
+5. Works across websites
+FluentText works in:
+- Text fields and text areas.
+- Email composition windows.
+- Web forms.
+- Rich-text editors.
+- Other editable fields.
+Use the floating menu, the right-click menu, or keyboard shortcuts to open its tools.
+
+6. Quick actions and keyboard shortcuts
+- Quick rewrite: Alt + Shift + F
+- Quick translate: Alt + Shift + G
+- Open the rewrite menu: Alt + Shift + E
+- Turn FluentText on or off: Alt + Shift + K
+Choose the rewrite style and target language used by the quick actions.
+
+7. Your choice of AI provider
+FluentText is not tied to a single AI service. Connect a hosted provider, a local model server, or a proxy you run yourself. Enter the endpoint, choose the authentication header, and select the models you want. The extension sends requests only to the service you configure.
+
+8. Personalization and customization
+- Personal dictionary for words you commonly use.
+- Spelling and grammar preferences.
+- English variant: US, UK, Canadian, Australian and Indian English.
+- Translation languages and writing styles.
+- Disable FluentText on specific websites.
+- Adjust checking delays and other preferences.
+
+Privacy first
+Your writing belongs to you.
+FluentText has no developer-operated backend, no user accounts, no analytics and no tracking.
+- API credentials are stored locally in your browser and are never synced.
+- Text is sent only to the AI service you configure, for features that require AI processing.
+- No text is sent to a developer-operated server.
+- Custom endpoints and proxy connections are configured by you.
+- You remain in control of your provider and data.
+Text processed by AI is transmitted to your selected provider. Its privacy and data-retention policies apply.
+
+Browser compatibility
+- Chrome and other Chromium-based browsers
+- Firefox
+
+Get started
+1. Install FluentText.
+2. Open Settings and choose your AI provider.
+3. Add your API key or custom endpoint.
+4. Start writing on any supported website.
+
+FluentText takes care of proofreading, rewriting and translation while you focus on what matters: your message.
+
+FluentText - Write better. Communicate clearly.
+
+Project: https://github.com/aryanarin/fluenttext
+
+**Metadata rule:** do not list provider brands in the store title, short description, long description, or manifest description. Chrome treats provider-name lists as keyword spam (Yellow Argon). Provider names belong only in the extension's settings screen, where they identify a working option. Use generic wording such as "the AI provider you choose" everywhere in store metadata.
 
 **Links:**
 - Homepage and source: https://github.com/aryanarin/fluenttext
@@ -74,4 +160,4 @@ Ready in `docs/store-assets/`:
 | `promo-440x280.png` | 440x280 small promo tile, 24-bit PNG with no alpha |
 | `marquee-1400x560.png` | 1400x560 marquee promo tile, 24-bit PNG with no alpha |
 
-The screenshots were captured from the running 1.2.0 build against a local demo page and a local proxy endpoint; the API key and proxy token shown are masked test values. The extension icons (16, 48, 128) live in `chrome/icons/` and are generated by `tools/make-icons.ps1`. The promo and marquee tiles are generated by `tools/make-promo.ps1` and `tools/make-marquee.ps1`; both draw the shared artwork from `tools/icon-art.ps1`.
+The screenshots were captured from the running 1.2.0 build against a local demo page and a local proxy endpoint; 1.2.1 changes only the sidebar selection logic and store metadata, so the visible UI is unchanged. The API key and proxy token shown are masked test values. The extension icons (16, 48, 128) live in `chrome/icons/` and are generated by `tools/make-icons.ps1`. The promo and marquee tiles are generated by `tools/make-promo.ps1` and `tools/make-marquee.ps1`; both draw the shared artwork from `tools/icon-art.ps1`.

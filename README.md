@@ -3,8 +3,8 @@
 A writing assistant for Chrome and Firefox, powered by [Groq](https://groq.com) or any OpenAI-compatible API. It proofreads as you type, rewrites and translates selected text, and detects languages, all without leaving the page.
 
 - **Proofreading:** spelling, grammar, punctuation, clarity and style, underlined in place. Click an underline to accept, dismiss, or add a word to your dictionary. A badge in the text box lists everything and offers "Fix all".
-- **Rewrite:** improve, fix, shorten, lengthen, paraphrase, formal, friendly, confident, or your own instruction.
-- **Translate:** your pinned languages first (English and German by default), any other language by typing it, and the source language is detected automatically.
+- **Rewrite:** two focused actions — **Improve Writing** fixes grammar and awkward wording without changing the tone, and **More polite** makes the text more courteous.
+- **Translate:** the languages you add in Settings (German by default), with the source language detected automatically. The right-click menu also has a one-off “More languages” list.
 - **Detect language:** one click to name the language of any selection.
 - **Works on any site:** textareas, text inputs and rich text editors. Replace text in a text box, or copy the result from read-only page text.
 - **Your choice of provider:** Groq, OpenAI, OpenRouter, Mistral, a local Ollama server, a Cloudflare Worker or other proxy, or any endpoint that speaks the OpenAI chat-completions format.
@@ -74,8 +74,8 @@ The Groq defaults are `openai/gpt-oss-20b` for as-you-type checks and `openai/gp
 | Proofread | Type in any text box. After a short pause, problems are underlined. Click one for the fix. |
 | Fix everything | Click the round badge in the text box, then **Fix all**. |
 | Rewrite, translate or detect language | Select text, then click the star, or right-click and choose **FluentText**. |
-| Translate to another language | Star menu: type it in **Other language...**. Right-click menu: **Translate to > More languages**. |
-| Quick rewrite | Select text and press **Alt+Shift+F** (default). Applies the mode chosen in settings, formal by default. |
+| Translate to another language | Add the language under **Settings > Translation**, then choose it in the star menu. Right-click menu: **Translate to > More languages**. |
+| Quick rewrite | Select text and press **Alt+Shift+F** (default). Applies **Improve Writing** or **More polite**, as chosen in settings. |
 | Quick translate | Select text and press **Alt+Shift+G** (default). Translates into the language chosen in settings, German by default. |
 | Open the rewrite menu | Select text and press **Alt+Shift+E**. |
 | Turn on or off | **Alt+Shift+K**, or the toolbar popup (also has a per-site switch). |

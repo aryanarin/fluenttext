@@ -539,19 +539,87 @@ function initSectionNav() {
   };
 
   let frame = 0;
+  let pinned = '';
+  let pinTimer = 0;
+
+  // Cards live in two independent columns, so several can cross the reading
+  // line at once. Pick the one whose top crossed most recently rather than the
+  // first in nav order.
   const update = () => {
     frame = 0;
-    const topbar = document.querySelector('.topbar');
-    const line = (topbar ? topbar.offsetHeight : 0) + 80;
-    const current = sections.find((section) => section.getBoundingClientRect().bottom > line) || sections[sections.length - 1];
-    activate(current.id);
+    if (pinned) return;
+    // Match the offset the browser uses for anchor jumps: the card's
+    // scroll-margin-top includes the top bar and, on narrow screens, the
+    // sticky horizontal nav.
+    const margin = parseFloat(getComputedStyle(sections[0]).scrollMarginTop) || 0;
+    const line = margin + 4;
+    const scrollable = document.documentElement.scrollHeight > window.innerHeight + 2;
+    const atBottom = scrollable && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) {
+      // The last card in the taller column cannot reach the reading line, so
+      // highlight the card that reaches furthest down the page instead.
+      let last = sections[0];
+      let lastBottom = -Infinity;
+      for (const section of sections) {
+        const bottom = section.getBoundingClientRect().bottom;
+        if (bottom > lastBottom) {
+          lastBottom = bottom;
+          last = section;
+        }
+      }
+      activate(last.id);
+      return;
+    }
+    let crossed = null;
+    let crossedTop = -Infinity;
+    let nearest = sections[0];
+    let nearestGap = Infinity;
+    for (const section of sections) {
+      const rect = section.getBoundingClientRect();
+      const gap = Math.abs(rect.top - line);
+      if (gap < nearestGap) {
+        nearestGap = gap;
+        nearest = section;
+      }
+      if (rect.top <= line && rect.bottom > line && rect.top > crossedTop) {
+        crossedTop = rect.top;
+        crossed = section;
+      }
+    }
+    activate((crossed || nearest).id);
   };
+
   const schedule = () => {
     if (!frame) frame = requestAnimationFrame(update);
   };
 
+  const release = () => {
+    pinned = '';
+    clearTimeout(pinTimer);
+  };
+
+  // Keep the clicked item selected while smooth scrolling and while the page
+  // cannot scroll far enough to put the target on the reading line. A real
+  // scroll gesture hands control back to the scroll spy.
+  const pin = (id) => {
+    if (!id || !document.getElementById(id)) return;
+    pinned = id;
+    activate(id);
+    clearTimeout(pinTimer);
+    pinTimer = setTimeout(() => { pinned = ''; }, 4000);
+  };
+
+  for (const item of items) {
+    item.addEventListener('click', () => pin(item.dataset.section));
+  }
+  const scrollKeys = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ']);
+  window.addEventListener('wheel', release, { passive: true });
+  window.addEventListener('touchstart', release, { passive: true });
+  window.addEventListener('keydown', (e) => { if (scrollKeys.has(e.key)) release(); });
   window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule);
+  window.addEventListener('resize', () => { release(); schedule(); });
+  window.addEventListener('hashchange', () => pin(location.hash.slice(1)));
+  if (location.hash) pin(location.hash.slice(1));
   update();
 }
 
